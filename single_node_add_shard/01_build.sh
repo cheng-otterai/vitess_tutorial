@@ -6,7 +6,7 @@ mkdir -p "$VTDATAROOT/etcd"
 mkdir -p "$VTDATAROOT/tmp"
 mkdir -p "$VTDATAROOT/backups"
 
-hostname="172.16.33.48"
+hostname=$(hostname -I | awk '{print $1}')
 vtctld_web_port=15000
 ETCD_SERVER="localhost:2379"
 TOPOLOGY_FLAGS="--topo_implementation etcd2 --topo_global_server_address $ETCD_SERVER --topo_global_root /vitess/global"

@@ -6,8 +6,7 @@ mkdir -p "$VTDATAROOT/etcd"
 mkdir -p "$VTDATAROOT/tmp"
 mkdir -p "$VTDATAROOT/backups"
 
-hostname="<YOUR-IP-ADDR>"
-vtctld_web_port=15000
+hostname=$(hostname -I | awk '{print $1}')
 ETCD_SERVER="localhost:2379"
 TOPOLOGY_FLAGS="--topo_implementation etcd2 --topo_global_server_address $ETCD_SERVER --topo_global_root /vitess/global"
 cell="otter-zone"
@@ -38,7 +37,8 @@ echo "etcd is running!"
 
 
 ################### VTCTLD
-grpc_port=15999
+vtctld_web_port=15000
+vtctld_grpc_port=15999
 
 echo "Starting vtctld..."
 vtctld \
@@ -49,7 +49,7 @@ vtctld \
  --file_backup_storage_root $VTDATAROOT/backups \
  --log_dir $VTDATAROOT/tmp \
  --port $vtctld_web_port \
- --grpc_port $grpc_port \
+ --grpc_port $vtctld_grpc_port \
  --pid_file $VTDATAROOT/tmp/vtctld.pid \
  --pprof-http \
   > $VTDATAROOT/tmp/vtctld.out 2>&1 &
@@ -165,8 +165,8 @@ vtctldclient ApplyVSchema --vschema-file vschema_commerce_initial.json commerce 
 
 
 ################### VTGATE
-web_port=15001
-grpc_port=15991
+vtgate_web_port=15001
+vtgate_grpc_port=15991
 mysql_server_port=15306
 mysql_server_socket_path="/tmp/mysql.sock"
 
@@ -176,8 +176,8 @@ vtgate \
   $TOPOLOGY_FLAGS \
   --log_dir $VTDATAROOT/tmp \
   --log_queries_to_file $VTDATAROOT/tmp/vtgate_querylog.txt \
-  --port $web_port \
-  --grpc_port $grpc_port \
+  --port $vtgate_web_port \
+  --grpc_port $vtgate_grpc_port \
   --mysql_server_port $mysql_server_port \
   --mysql_server_socket_path $mysql_server_socket_path \
   --cell $cell \
@@ -191,12 +191,12 @@ vtgate \
   > $VTDATAROOT/tmp/vtgate.out 2>&1 &
 
 while true; do
- curl -I "http://$hostname:$web_port/debug/status" >/dev/null 2>&1 && break
+ curl -I "http://$hostname:$vtgate_web_port/debug/status" >/dev/null 2>&1 && break
  sleep 0.1
 done;
 echo "vtgate is up!"
 
-echo "Access vtgate at http://$hostname:$web_port/debug/status"
+echo "Access vtgate at http://$hostname:$vtgate_web_port/debug/status"
 disown -a
 
 
